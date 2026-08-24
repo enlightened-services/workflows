@@ -1,0 +1,80 @@
+name: Reusable Docker Build & Push
+
+on:
+  workflow_call:
+    inputs:
+      context:
+        description: 'Docker build context directory'
+        required: false
+        default: '.'
+        type: string
+      dockerfile:
+        description: 'Path to Dockerfile'
+        required: true
+        type: string
+      image_name:
+        description: 'Target image name in GHCR (e.g. es-sib-studio)'
+        required: true
+        type: string
+      platforms:
+        description: 'Target platforms (default: linux/amd64,linux/arm64)'
+        required: false
+        default: 'linux/amd64,linux/arm64'
+        type: string
+      cache_scope:
+        description: 'Cache key scope (default: default)'
+        required: false
+        default: 'default'
+        type: string
+      push:
+        description: 'Whether to push to registry (default: true)'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Determine build metadata
+        id: meta
+        run: |
+          echo "build_time=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
+          echo "short_sha=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        if: ${{ inputs.push }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push multi-arch image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ inputs.context }}
+          file: ${{ inputs.dockerfile }}
+          platforms: ${{ inputs.platforms }}
+          push: ${{ inputs.push }}
+          build-args: |
+            VITE_BUILD_TIME=${{ steps.meta.outputs.build_time }}
+            VITE_BUILD_SHA=${{ steps.meta.outputs.short_sha }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/${{ inputs.image_name }}:latest
+            ghcr.io/${{ github.repository_owner }}/${{ inputs.image_name }}:${{ steps.meta.outputs.short_sha }}
+          cache-from: type=gha,scope=${{ inputs.cache_scope }}
+          cache-to: type=gha,mode=max,scope=${{ inputs.cache_scope }}
