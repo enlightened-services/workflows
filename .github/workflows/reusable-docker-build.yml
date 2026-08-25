@@ -54,12 +54,13 @@ jobs:
           fetch-depth: 0
 
       - name: Checkout private submodules
-        if: ${{ secrets.ORG_READ_TOKEN != '' }}
         env:
           SHARED_READ_TOKEN: ${{ secrets.ORG_READ_TOKEN }}
         run: |
-          git config --global url."https://x-access-token:${SHARED_READ_TOKEN}@github.com/".insteadOf "https://github.com/"
-          git submodule update --init --recursive
+          if [ -n "$SHARED_READ_TOKEN" ]; then
+            git config --global url."https://x-access-token:${SHARED_READ_TOKEN}@github.com/".insteadOf "https://github.com/"
+            git submodule update --init --recursive
+          fi
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -96,12 +97,13 @@ jobs:
           fetch-depth: 0
 
       - name: Checkout private submodules
-        if: ${{ secrets.ORG_READ_TOKEN != '' }}
         env:
           SHARED_READ_TOKEN: ${{ secrets.ORG_READ_TOKEN }}
         run: |
-          git config --global url."https://x-access-token:${SHARED_READ_TOKEN}@github.com/".insteadOf "https://github.com/"
-          git submodule update --init --recursive
+          if [ -n "$SHARED_READ_TOKEN" ]; then
+            git config --global url."https://x-access-token:${SHARED_READ_TOKEN}@github.com/".insteadOf "https://github.com/"
+            git submodule update --init --recursive
+          fi
 
       - name: Verify release version
         id: version
