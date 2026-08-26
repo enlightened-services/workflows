@@ -41,7 +41,7 @@ on:
         description: Fine-grained token with read access to private submodules
         required: false
 
-  jobs:
+jobs:
   validate:
     runs-on: ubuntu-latest
     permissions:
