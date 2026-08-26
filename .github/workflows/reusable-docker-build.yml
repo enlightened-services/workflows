@@ -44,6 +44,7 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:
@@ -86,6 +87,7 @@ jobs:
     if: ${{ github.ref == 'refs/heads/main' }}
     needs: validate
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: write
@@ -178,12 +180,13 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/${{ inputs.image_name }}:${{ steps.meta.outputs.short_sha }}
             ghcr.io/${{ github.repository_owner }}/${{ inputs.image_name }}:latest
           cache-from: type=gha,scope=${{ inputs.cache_scope }}
-          cache-to: type=gha,mode=max,scope=${{ inputs.cache_scope }}
+          cache-to: type=gha,mode=max,scope=${{ inputs.cache_scope }},ignore-error=true
 
   dev-image:
     if: ${{ github.ref == 'refs/heads/dev' }}
     needs: validate
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
       packages: write
@@ -236,4 +239,4 @@ jobs:
             ghcr.io/${{ github.repository_owner }}/${{ inputs.image_name }}:dev
             ghcr.io/${{ github.repository_owner }}/${{ inputs.image_name }}:dev-${{ steps.meta.outputs.short_sha }}
           cache-from: type=gha,scope=${{ inputs.cache_scope }}-dev
-          cache-to: type=gha,mode=max,scope=${{ inputs.cache_scope }}-dev
+          cache-to: type=gha,mode=max,scope=${{ inputs.cache_scope }}-dev,ignore-error=true
