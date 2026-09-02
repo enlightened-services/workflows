@@ -43,8 +43,8 @@ on:
 
 jobs:
   validate:
-    runs-on: self-hosted
-    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
     steps:
@@ -86,7 +86,7 @@ jobs:
   release:
     if: ${{ github.ref == 'refs/heads/main' }}
     needs: validate
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: read
@@ -185,7 +185,7 @@ jobs:
   dev-image:
     if: ${{ github.ref == 'refs/heads/dev' }}
     needs: validate
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: read
