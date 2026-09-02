@@ -50,7 +50,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout repository and private submodules
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           submodules: false
           fetch-depth: 0
@@ -65,10 +65,10 @@ jobs:
           fi
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v5
+        uses: pnpm/action-setup@v6
 
       - name: Set up Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -94,7 +94,7 @@ jobs:
       packages: write
     steps:
       - name: Checkout repository and private submodules
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           submodules: false
           fetch-depth: 0
