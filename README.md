@@ -75,3 +75,10 @@ jobs:
 Om deze workflow te kunnen aanroepen vanuit andere repositories binnen de organisatie:
 1. Ga naar **Settings** $\rightarrow$ **Actions** $\rightarrow$ **General**.
 2. Onder **Access**: vink **"Accessible from repositories in the 'enlightenedservices' organization"** aan.
+
+---
+
+## Self-Hosted Runner (Debian 13)
+
+Zie [docs/runner-setup-debian-13.md](docs/runner-setup-debian-13.md) voor de inrichting van de barebones
+Debian 13 (amd64) host met de org-level runner (Git, Docker+Buildx+QEMU, `$HOME`-fix en vereiste org-secrets).
