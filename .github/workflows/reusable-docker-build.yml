@@ -19,7 +19,7 @@ on:
       platforms:
         description: Target platforms
         required: false
-        default: linux/amd64,linux/arm64
+        default: linux/arm64
         type: string
       cache_scope:
         description: GitHub Actions cache scope
@@ -44,7 +44,7 @@ on:
 jobs:
   validate:
     if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'pull_request' && github.base_ref == 'main') }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 20
     permissions:
       contents: read
@@ -87,7 +87,7 @@ jobs:
   release:
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     needs: validate
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     timeout-minutes: 30
     permissions:
       contents: read
