@@ -1,4 +1,4 @@
-name: Reusable App Validation & Release
+name: Reusable Build & Release
 
 on:
   workflow_call:
@@ -42,12 +42,13 @@ on:
         required: false
 
 jobs:
-  validate:
-    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'pull_request' && github.base_ref == 'main') }}
+  build:
+    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-24.04-arm
-    timeout-minutes: 20
+    timeout-minutes: 45
     permissions:
       contents: read
+      packages: write
     steps:
       - name: Checkout repository and private submodules
         uses: actions/checkout@v7
@@ -83,30 +84,6 @@ jobs:
       - name: Test
         if: ${{ inputs.test_command != '' }}
         run: ${{ inputs.test_command }}
-
-  release:
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    needs: validate
-    runs-on: ubuntu-24.04-arm
-    timeout-minutes: 30
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - name: Checkout repository and private submodules
-        uses: actions/checkout@v7
-        with:
-          submodules: false
-          fetch-depth: 0
-
-      - name: Checkout private submodules
-        env:
-          SHARED_READ_TOKEN: ${{ secrets.ORG_READ_TOKEN }}
-        run: |
-          if [ -n "$SHARED_READ_TOKEN" ]; then
-            git config --global url."https://x-access-token:${SHARED_READ_TOKEN}@github.com/".insteadOf "https://github.com/"
-            git submodule update --init --recursive
-          fi
 
       - name: Verify release version
         id: version
