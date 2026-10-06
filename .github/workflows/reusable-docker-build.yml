@@ -46,6 +46,11 @@ on:
         required: false
         default: false
         type: boolean
+      pre_install_command:
+        description: Optional command run at repo root before pnpm install
+        required: false
+        default: ''
+        type: string
       check_command:
         description: Static validation command; empty disables it
         required: false
@@ -97,6 +102,10 @@ jobs:
           node-version: 22
           cache: pnpm
           cache-dependency-path: ${{ inputs.working_directory }}/pnpm-lock.yaml
+
+      - name: Pre-install
+        if: ${{ inputs.pre_install_command != '' }}
+        run: ${{ inputs.pre_install_command }}
 
       - name: Install dependencies
         working-directory: ${{ inputs.working_directory }}
