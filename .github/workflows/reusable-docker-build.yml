@@ -26,6 +26,26 @@ on:
         required: false
         default: default
         type: string
+      working_directory:
+        description: Directory for pnpm install/check/test (relative to repo root)
+        required: false
+        default: '.'
+        type: string
+      package_json_path:
+        description: Path to package.json used for version verification
+        required: false
+        default: package.json
+        type: string
+      pnpm_version:
+        description: pnpm version; empty falls back to the packageManager field
+        required: false
+        default: ''
+        type: string
+      allow_version_reset:
+        description: Allow a version that does not increase (one-time baseline reset)
+        required: false
+        default: false
+        type: boolean
       check_command:
         description: Static validation command; empty disables it
         required: false
@@ -67,6 +87,9 @@ jobs:
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v6
+        with:
+          version: ${{ inputs.pnpm_version }}
+          package_json_file: ${{ inputs.package_json_path }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -75,26 +98,31 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
+        working-directory: ${{ inputs.working_directory }}
         run: pnpm install --frozen-lockfile
 
       - name: Check
         if: ${{ inputs.check_command != '' }}
+        working-directory: ${{ inputs.working_directory }}
         run: ${{ inputs.check_command }}
 
       - name: Test
         if: ${{ inputs.test_command != '' }}
+        working-directory: ${{ inputs.working_directory }}
         run: ${{ inputs.test_command }}
 
       - name: Verify release version
         id: version
         env:
           BEFORE_SHA: ${{ github.event.before }}
+          VERSION_FILE: ${{ inputs.package_json_path }}
+          ALLOW_VERSION_RESET: ${{ inputs.allow_version_reset }}
         run: |
           node <<'NODE'
           const fs = require('node:fs');
           const { execFileSync } = require('node:child_process');
 
-          const version = JSON.parse(fs.readFileSync('package.json', 'utf8')).version;
+          const version = JSON.parse(fs.readFileSync(process.env.VERSION_FILE, 'utf8')).version;
           const parse = (value) => {
             const match = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(value ?? '');
             if (!match) throw new Error(`Invalid semantic version: ${value}`);
@@ -106,16 +134,20 @@ jobs:
           if (!base || /^0+$/.test(base)) base = 'HEAD^';
           let previousVersion;
           try {
-            previousVersion = JSON.parse(execFileSync('git', ['show', `${base}:package.json`], { encoding: 'utf8' })).version;
+            previousVersion = JSON.parse(execFileSync('git', ['show', `${base}:${process.env.VERSION_FILE}`], { encoding: 'utf8' })).version;
           } catch {
             previousVersion = '0.0.0';
           }
           const previous = parse(previousVersion);
+          const allowReset = process.env.ALLOW_VERSION_RESET === 'true';
           const increased = current.some((part, index) =>
             part > previous[index] && current.slice(0, index).every((value, prior) => value === previous[prior])
           );
-          if (!increased) {
+          if (!increased && !allowReset) {
             throw new Error(`package.json version must increase: ${previousVersion} -> ${version}`);
+          }
+          if (!increased && allowReset) {
+            console.log(`version reset allowed: ${previousVersion} -> ${version}`);
           }
 
           const output = process.env.GITHUB_OUTPUT;
